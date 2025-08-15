@@ -1,0 +1,89 @@
+{
+  "study_info": {
+    "title": "COVID-19 Vaccine Effectiveness: Systematic Review and Meta-Analysis",
+    "date": "2025-01-15",
+    "authors": ["Wansuk Choi"],
+    "registration": "PROSPERO CRD42025XXXXX"
+  },
+  "search_results": {
+    "databases": {
+      "PubMed": 1842,
+      "Cochrane": 231,
+      "EMBASE": 567,
+      "Web_of_Science": 423
+    },
+    "total_initial": 3063,
+    "duplicates_removed": 812,
+    "screened": 2251,
+    "full_text_assessed": 428,
+    "included_qualitative": 39,
+    "included_meta_analysis": 35
+  },
+  "meta_analysis_results": {
+    "overall": {
+      "vaccine_effectiveness": 82.3,
+      "confidence_interval": [79.8, 84.5],
+      "p_value": "<0.001",
+      "heterogeneity": {
+        "I_squared": 78.5,
+        "tau_squared": 45.2,
+        "Q_statistic": 156.3,
+        "p_heterogeneity": "<0.001"
+      }
+    },
+    "by_vaccine_type": {
+      "mRNA": {
+        "n_studies": 22,
+        "pooled_effectiveness": 87.8,
+        "confidence_interval": [85.9, 89.4],
+        "severe_disease_prevention": 95.3,
+        "hospitalization_prevention": 94.1
+      },
+      "viral_vector": {
+        "n_studies": 10,
+        "pooled_effectiveness": 71.9,
+        "confidence_interval": [69.1, 74.4],
+        "severe_disease_prevention": 89.2,
+        "hospitalization_prevention": 87.8
+      },
+      "inactivated": {
+        "n_studies": 7,
+        "pooled_effectiveness": 59.2,
+        "confidence_interval": [54.3, 63.7],
+        "severe_disease_prevention": 78.6,
+        "hospitalization_prevention": 76.3
+      }
+    },
+    "by_variant": {
+      "Alpha": {
+        "effectiveness": 85.2,
+        "n_studies": 8
+      },
+      "Delta": {
+        "effectiveness": 79.6,
+        "n_studies": 12
+      },
+      "Omicron": {
+        "effectiveness": 65.3,
+        "n_studies": 15
+      }
+    },
+    "waning_immunity": {
+      "0_3_months": 88.5,
+      "3_6_months": 75.2,
+      "6_9_months": 62.8,
+      "9_12_months": 51.3
+    }
+  },
+  "quality_assessment": {
+    "high_quality": 18,
+    "moderate_quality": 12,
+    "low_quality": 5
+  },
+  "conclusions": [
+    "COVID-19 vaccines demonstrate high effectiveness against infection and severe disease",
+    "mRNA vaccines show the highest effectiveness",
+    "Effectiveness wanes over time, suggesting need for boosters",
+    "Reduced effectiveness against newer variants"
+  ]
+}
