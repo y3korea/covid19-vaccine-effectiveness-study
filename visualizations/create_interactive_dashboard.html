@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19 백신 효과성 인터랙티브 대시보드</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin: 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .metric-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .metric-sublabel {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .filter-container {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .filter-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        select, button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🦠 COVID-19 백신 효과성 메타분석 대시보드</h1>
+        <div class="subtitle">체계적 문헌고찰 및 메타분석 결과 (2025년 1월)</div>
+    </div>
+    
+    <div class="container">
+        <!-- 주요 지표 카드 -->
+        <div class="metric-cards">
+            <div class="metric-card">
+                <div class="metric-value">82.3%</div>
+                <div class="metric-label">전체 백신 효과성</div>
+                <div class="metric-sublabel">95% CI: 79.8-84.5%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">35</div>
+                <div class="metric-label">메타분석 포함 연구</div>
+                <div class="metric-sublabel">총 39편 중</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">8.4M</div>
+                <div class="metric-label">총 참여자 수</div>
+                <div class="metric-sublabel">6개 대륙</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">78.5%</div>
+                <div class="metric-label">I² 이질성</div>
+                <div class="metric-sublabel">p < 0.001</div>
+            </div>
+        </div>
+        
+        <!-- 필터 컨트롤 -->
+        <div class="filter-container">
+            <div class="filter-row">
+                <label>백신 종류:</label>
+                <select id="vaccineFilter">
+                    <option value="all">전체</option>
+                    <option value="mrna">mRNA</option>
+                    <option value="vector">바이러스 벡터</option>
+                    <option value="inactivated">불활화</option>
+                </select>
+                
+                <label>변이:</label>
+                <select id="variantFilter">
+                    <option value="all">전체</option>
+                    <option value="alpha">Alpha</option>
+                    <option value="delta">Delta</option>
+                    <option value="omicron">Omicron</option>
+                </select>
+                
+                <label>연령대:</label>
+                <select id="ageFilter">
+                    <option value="all">전체</option>
+                    <option value="young">18-39</option>
+                    <option value="middle">40-59</option>
+                    <option value="old">60+</option>
+                </select>
+                
+                <button onclick="updateDashboard()">업데이트</button>
+                <button onclick="resetFilters()">초기화</button>
+            </div>
+        </div>
+        
+        <!-- 차트 그리드 -->
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <div class="chart-title">백신 종류별 효과성</div>
+                <div id="vaccineTypeChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">변이별 효과성</div>
+                <div id="variantChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">시간에 따른 효과 감소</div>
+                <div id="waningChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">연령별 효과성</div>
+                <div id="ageChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">지역별 연구 분포</div>
+                <div id="geoChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">부스터 효과</div>
+                <div id="boosterChart"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2025 Wansuk Choi | 의학 연구팀 | 데이터 업데이트: 2025-01-15</p>
+    </div>
+    
+    <script>
+        // 백신 종류별 효과성 차트
+        function createVaccineTypeChart() {
+            var data = [{
+                x: ['mRNA', '바이러스 벡터', '불활화'],
+                y: [87.8, 71.9, 59.2],
+                error_y: {
+                    type: 'data',
+                    array: [2.5, 3.2, 4.8],
+                    visible: true
+                },
+                type: 'bar',
+                marker: {
+                    color: ['#2E86AB', '#A23B72', '#F18F01']
+                },
+                text: ['87.8%', '71.9%', '59.2%'],
+                textposition: 'outside'
+            }];
+            
+            var layout = {
+                yaxis: {
+                    title: '백신 효과성 (%)',
+                    range: [0, 100]
+                },
+                margin: {t: 10, b: 40}
+            };
+            
+            Plotly.newPlot('vaccineTypeChart', data, layout, {responsive: true});
+        }
+        
+        // 변이별 효과성 차트
+        function createVariantChart() {
+            var data = [{
+                x: ['Wild Type', 'Alpha', 'Beta', 'Gamma', 'Delta', 'Omicron BA.1', 'Omicron BA.2', 'Omicron BA.5'],
+                y: [92.3, 85.2, 78.5, 81.3, 79.6, 65.3, 67.2, 62.8],
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {
+                    color: '#C73E1D',
+                    width: 3
+                },
+                marker: {
+                    size: 10,
+                    color: '#C73E1D'
+                }
+            }];
+            
+            var layout = {
+                xaxis: {
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: '백신 효과성 (%)',
+                    range: [50, 100]
+                },
+                margin: {t: 10, b: 80}
+            };
+            
+            Plotly.newPlot('variantChart', data, layout, {responsive: true});
+        }
+        
+        // 시간에 따른 효과 감소
+        function createWaningChart() {
+            var months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            
+            var trace1 = {
+                x: months,
+                y: months.map(m => 95 * Math.exp(-0.05 * m)),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'mRNA',
+                line: {color: '#2E86AB', width: 3}
+            };
+            
+            var trace2 = {
+                x: months,
+                y: months.map(m => 85 * Math.exp(-0.06 * m)),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '바이러스 벡터',
+                line: {color: '#A23B72', width: 3}
+            };
+            
+            var trace3 = {
+                x: months,
+                y: months.map(m => 70 * Math.exp(-0.08 * m)),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '불활화',
+                line: {color: '#F18F01', width: 3}
+            };
+            
+            var layout = {
+                xaxis: {
+                    title: '접종 후 개월 수'
+                },
+                yaxis: {
+                    title: '백신 효과성 (%)',
+                    range: [30, 100]
+                },
+                margin: {t: 10}
+            };
+            
+            Plotly.newPlot('waningChart', [trace1, trace2, trace3], layout, {responsive: true});
+        }
+        
+        // 연령별 효과성
+        function createAgeChart() {
+            var data = [{
+                x: ['18-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'],
+                y: [92, 91, 90, 88, 86, 83, 78],
+                name: '감염 예방',
+                type: 'bar',
+                marker: {color: '#2E86AB'}
+            }, {
+                x: ['18-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'],
+                y: [98, 97, 96, 94, 91, 87, 82],
+                name: '중증 예방',
+                type: 'bar',
+                marker: {color: '#C73E1D'}
+            }];
+            
+            var layout = {
+                barmode: 'group',
+                xaxis: {
+                    title: '연령대'
+                },
+                yaxis: {
+                    title: '백신 효과성 (%)',
+                    range: [0, 100]
+                },
+                margin: {t: 10}
+            };
+            
+            Plotly.newPlot('ageChart', data, layout, {responsive: true});
+        }
+        
+        // 지역별 연구 분포
+        function createGeoChart() {
+            var data = [{
+                type: 'pie',
+                labels: ['북미', '유럽', '아시아', '남미', '아프리카'],
+                values: [12, 15, 8, 3, 1],
+                hole: 0.4,
+                marker: {
+                    colors: ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#8B4513']
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside'
+            }];
+            
+            var layout = {
+                margin: {t: 10, b: 10}
+            };
+            
+            Plotly.newPlot('geoChart', data, layout, {responsive: true});
+        }
+        
+        // 부스터 효과
+        function createBoosterChart() {
+            var months = [0, 1, 2, 3, 4, 5, 6];
+            
+            var trace1 = {
+                x: months,
+                y: [85, 75, 65, 55, 48, 42, 38],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '기본 접종만',
+                line: {color: '#A23B72', width: 3}
+            };
+            
+            var trace2 = {
+                x: months,
+                y: [95, 92, 88, 84, 80, 76, 72],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '1차 부스터',
+                line: {color: '#2E86AB', width: 3}
+            };
+            
+            var trace3 = {
+                x: months,
+                y: [97, 95, 93, 91, 88, 85, 82],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: '2차 부스터',
+                line: {color: '#F18F01', width: 3}
+            };
+            
+            var layout = {
+                xaxis: {
+                    title: '마지막 접종 후 개월 수'
+                },
+                yaxis: {
+                    title: '백신 효과성 (%)',
+                    range: [30, 100]
+                },
+                margin: {t: 10}
+            };
+            
+            Plotly.newPlot('boosterChart', [trace1, trace2, trace3], layout, {responsive: true});
+        }
+        
+        // 대시보드 업데이트 함수
+        function updateDashboard() {
+            // 필터에 따른 데이터 업데이트 로직
+            console.log('Dashboard updated with filters');
+            // 실제 구현시 필터 값에 따라 차트 데이터 재계산
+        }
+        
+        // 필터 초기화
+        function resetFilters() {
+            document.getElementById('vaccineFilter').value = 'all';
+            document.getElementById('variantFilter').value = 'all';
+            document.getElementById('ageFilter').value = 'all';
+            updateDashboard();
+        }
+        
+        // 페이지 로드시 차트 생성
+        window.onload = function() {
+            createVaccineTypeChart();
+            createVariantChart();
+            createWaningChart();
+            createAgeChart();
+            createGeoChart();
+            createBoosterChart();
+        };
+        
+        // 반응형 리사이즈
+        window.onresize = function() {
+            Plotly.Plots.resize('vaccineTypeChart');
+            Plotly.Plots.resize('variantChart');
+            Plotly.Plots.resize('waningChart');
+            Plotly.Plots.resize('ageChart');
+            Plotly.Plots.resize('geoChart');
+            Plotly.Plots.resize('boosterChart');
+        };
+    </script>
+</body>
+</html>
